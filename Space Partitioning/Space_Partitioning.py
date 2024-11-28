@@ -6,6 +6,8 @@ import random
 
 import random
 
+import random
+
 
 def formar_particion_estado_4(n):
     lista_hojas = []
@@ -21,6 +23,9 @@ def formar_particion_estado_4(n):
         selec = random.choice(lista_hojas)
         # print("Nodo seleccionado: "+str(selec))
         profundidad = nx.shortest_path_length(G, source=1, target=selec) + 1
+
+        if profundidad == 5:
+            continue
 
         if profundidad > G.graph['altura']:
             G.graph['altura'] = profundidad
@@ -40,7 +45,6 @@ def formar_particion_estado_4(n):
 
     return G
 
-
 def describir_arbol(G):
     def describir_arbol_aux(nodo, G, profundidad):
         hijos = list(G.successors(nodo))
@@ -55,21 +59,25 @@ def describir_arbol(G):
     print(string)
 
 
+import matplotlib.patches as patches
+
 class Cuadrado():
     def __init__(self, G, nodo=1, centro=(0, 0), tamaño=10):
-        tipos = ["suelo", "pared", "pared"]
+        self.G=G
+        self.S = nx.Graph()
+        tipos = ['suelo','pared']
         self.nodo = nodo
         self.centro = centro
         self.tamaño = tamaño
         self.tipo = random.choice(tipos)
 
-        self.profundidad = G.graph['altura']
+        self.profundidad = self.G.graph['altura']
 
         self.cuadrantes = []
 
         self.hijos = []
 
-        hijos = list(G.successors(nodo))
+        hijos = list(self.G.successors(nodo))
 
         if hijos:
             # Se divide por cuatro porque tiene la mitad de tamaño, y después se divide a la mitad otra vez para determinar el centro.
@@ -84,7 +92,7 @@ class Cuadrado():
 
             for hijo, offset in zip(hijos, offsets):
                 nuevo_centro = (self.centro[0] + offset[0], self.centro[1] + offset[1])
-                self.cuadrantes.append(Cuadrado(G, hijo, nuevo_centro, mitad_tamaño))
+                self.cuadrantes.append(Cuadrado(self.G, hijo, nuevo_centro, mitad_tamaño))
 
     def __str__(self):
         """
@@ -107,13 +115,13 @@ class Cuadrado():
         if self.tipo == 'pared':
             rect = patches.Rectangle(
                 (x - tamaño / 2, y - tamaño / 2), tamaño, tamaño,
-                linewidth=1, edgecolor='blue', facecolor='black'
+                linewidth=1, facecolor='black'
             )
             ax.add_patch(rect)
         elif self.tipo == 'suelo':
             rect = patches.Rectangle(
                 (x - tamaño / 2, y - tamaño / 2), tamaño, tamaño,
-                linewidth=1, edgecolor='blue', facecolor='white'
+                linewidth=1, facecolor='white'
             )
             ax.add_patch(rect)
 
@@ -122,7 +130,7 @@ class Cuadrado():
             cuadrante.dibujar(ax)
 
 
-G = formar_particion_estado_4(10)
+G = formar_particion_estado_4(40)
 cuadrado = Cuadrado(G)
 #cuadrado.imprimir_estructura()
 #print(cuadrado.profundidad)
