@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+
 import matplotlib.pyplot as plt
 
 
@@ -85,6 +86,7 @@ def formar_particion_estado_4(n, d=5, semilla=None):
 
 import matplotlib.patches as patches
 import os
+from matplotlib.colors import ListedColormap
 
 
 class Cuadrado():
@@ -401,6 +403,7 @@ class Cuadrado():
                     G_salas.add_edge(i, j, weight=peso_total)
 
             mst = nx.minimum_spanning_tree(G_salas)
+            self.grafo_salas = mst
             for edge in mst.edges():
                 fuente = salas[edge[0]]
                 destino = salas[edge[1]]
@@ -498,6 +501,16 @@ class Cuadrado():
                 print(f"\tNodo: {nodo} pintado")
                 cuadrante = self.encontrar_cuadrante(nodo)
                 cuadrante.tipo = 'suelo'
+
+    def obtener_matriz(self):
+        max_x = max(x for (x, y) in self.C.nodes)
+        max_y = max(y for (x, y) in self.C.nodes)
+        matriz = [[0 for _ in range(max_x + 1)] for _ in range(max_y + 1)]
+
+        for (x, y), data in self.C.nodes(data=True):
+            matriz[y][x] = data['value']  # 0 = pared, 1 = sala, 2 = camino
+
+        return matriz
 
     def imprimir_estructura(self, nivel=0):
         """
@@ -656,6 +669,43 @@ class Cuadrado():
             fig.savefig(archivo_guardado, transparent=False, bbox_inches='tight', dpi=300)
             print(f"Figura guardada en: {archivo_guardado}")
 
+    def mostrar_mapa_y_grafo(self):
+
+        # Crear matriz base
+        max_x = max(x for (x, y) in self.C.nodes)
+        max_y = max(y for (x, y) in self.C.nodes)
+        matriz = [[0 for _ in range(max_x + 1)] for _ in range(max_y + 1)]
+
+        for (x, y), data in self.C.nodes(data=True):
+            matriz[y][x] = data['value']  # 0: pared, 1: sala, 2: camino
+
+        # Posiciones de los nodos en el grafo de salas
+        pos = {}
+        for idx, sala in enumerate(self.salas):
+            celdas = [(x, y) for (x, y), d in self.C.nodes(data=True) if d['nodo'] in sala and d['value'] == 1]
+            if celdas:
+                xs, ys = zip(*celdas)
+                centro = (sum(xs) / len(xs), sum(ys) / len(ys))
+                pos[idx] = centro
+
+        # Dibujar
+        fig, ax = plt.subplots(figsize=(10, 10))
+        cmap = ListedColormap(['black', 'white', 'gray'])  # 0 = pared, 1 = sala, 2 = camino
+        ax.imshow(matriz, cmap=cmap, origin='upper')
+
+        # Dibujar grafo sobre el mapa
+        nx.draw(self.grafo_salas, pos, with_labels=True, node_color='red',
+                edge_color='yellow', node_size=400, ax=ax, font_size=10)
+
+        # Etiquetas de peso (distancia)
+        edge_labels = nx.get_edge_attributes(self.grafo_salas, 'weight')
+        nx.draw_networkx_edge_labels(self.grafo_salas, pos,
+                                     edge_labels={k: f"{v:.0f}" for k, v in edge_labels.items()},
+                                     font_color='blue', ax=ax)
+
+        ax.set_title("Mapa y grafo de salas superpuesto")
+        ax.axis('off')
+        plt.show()
 
 def crear_mazmorra_space_part(arquitectura, npart = 20, prof_division = 5, nsalas = 5, densidad = 1, guardar = False):
     if densidad > 3 or densidad < 0:
@@ -679,8 +729,8 @@ def crear_mazmorra_space_part(arquitectura, npart = 20, prof_division = 5, nsala
 # 'dikjstra', 'clasica'
 arquitectura = 'clasica'
 npart = 100
-prof = 5
-nsalas = 8
+prof = 3
+nsalas = 30
 densidad = 2
 guardar = False
 
@@ -692,3 +742,9 @@ cuadrado=crear_mazmorra_space_part(
     densidad=densidad,
     guardar=guardar
 )
+
+
+cuadrado.mostrar_mapa_y_grafo()
+
+m = cuadrado.obtener_matriz()
+print(m)
