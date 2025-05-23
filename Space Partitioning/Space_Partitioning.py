@@ -1,8 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
-import matplotlib.pyplot as plt
-
 
 def mostrar_grafo(graph):
     """Muestra el grafo utilizando matplotlib, con los pesos de las aristas."""
@@ -42,8 +40,6 @@ def hojas_preorden(G):
 
 
 import random
-import networkx as nx
-
 
 def formar_particion_estado_4(n, d=5, semilla=None):
     # Para conseguir reproducibilidad, podemos introducir una semilla al algoritmo.
@@ -691,7 +687,7 @@ class Cuadrado():
         # Dibujar
         fig, ax = plt.subplots(figsize=(10, 10))
         cmap = ListedColormap(['black', 'white', 'gray'])  # 0 = pared, 1 = sala, 2 = camino
-        ax.imshow(matriz, cmap=cmap, origin='upper')
+        ax.imshow(matriz, cmap=cmap, origin='lower')
 
         # Dibujar grafo sobre el mapa
         nx.draw(self.grafo_salas, pos, with_labels=True, node_color='red',
@@ -729,7 +725,7 @@ def crear_mazmorra_space_part(arquitectura, npart = 20, prof_division = 5, nsala
 # 'dikjstra', 'clasica'
 arquitectura = 'clasica'
 npart = 100
-prof = 3
+prof = 5
 nsalas = 30
 densidad = 2
 guardar = False
@@ -743,8 +739,22 @@ cuadrado=crear_mazmorra_space_part(
     guardar=guardar
 )
 
-
 cuadrado.mostrar_mapa_y_grafo()
 
 m = cuadrado.obtener_matriz()
 print(m)
+
+def seleccionar_inicio_y_final(grafo):
+    inicio = random.choice(list(grafo.nodes))
+    distancias = nx.single_source_dijkstra_path_length(grafo, inicio)
+    hojas = [n for n in grafo.nodes if grafo.degree[n] == 1]
+
+    if hojas:
+        final = max(hojas, key=lambda n: distancias.get(n, -1))
+    else:
+        final = max(distancias, key=distancias.get)
+
+    return inicio, final
+
+inicio, final = seleccionar_inicio_y_final(cuadrado.grafo_salas)
+print(inicio, final)
