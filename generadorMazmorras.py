@@ -12,7 +12,6 @@ import time
 import pandas as pd
 import traceback
 from itertools import product
-from IPython.display import display
 """
 ------------------------------------------------------------------------------------------------------------------------
                                                     RANDOM PLACEMENT
@@ -171,7 +170,7 @@ class Dungeon:
             plt.savefig(path, bbox_inches='tight', dpi=300)
             #print(f"Imagen guardada en: {path}")
 
-        #plt.show()
+        plt.show()
 
     def mostrar_grafo(self):
         pos = self.centros
@@ -179,7 +178,7 @@ class Dungeon:
         nx.draw(self.grafo, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=500)
         nx.draw_networkx_edge_labels(self.grafo, pos, edge_labels={k: f"{v:.1f}" for k, v in labels.items()})
         plt.title("Grafo de conexión entre salas")
-        #plt.show()
+        plt.show()
 
     def mostrar_mapa_y_grafo(self, guardar=False):
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -205,7 +204,7 @@ class Dungeon:
             path = os.path.join(carpeta, f"ColAl_{self.semilla}_grafo.png")
             plt.savefig(path, bbox_inches='tight', dpi=300)
             #print(f"Imagen guardada en: {path}")
-        #plt.show()
+        plt.show()
 
 def generar_dungeon_ColAl(anchura=60, altura=30, max_salas=10, semilla=None, intentos_por_sala=10, guardar=False):
     dungeon = Dungeon(anchura, altura, max_salas, semilla=semilla, intentos_por_sala=intentos_por_sala)
@@ -236,7 +235,7 @@ class Mapa():
         plt.figure(figsize=(5, 5))
         plt.imshow(self.mapa, cmap=cmap, interpolation="nearest")
         plt.axis("off")
-        #plt.show()
+        plt.show()
 
     def paso_de_simulacion(self):
         temp_mapa = [[None for _ in range(self.dimensiones)] for _ in range(self.dimensiones)]
@@ -374,7 +373,7 @@ class Mapa():
         # Marcar semillas opcional
         ax.scatter(semillas[:, 1], semillas[:, 0], c='red', s=20, marker='x')
 
-        ax.set_title(f'Expansión con bordes entre salas ({num_semillas} semillas)')
+        ax.set_title(str(self.semilla))
         ax.axis('off')
 
         if guardar:
@@ -384,7 +383,7 @@ class Mapa():
             plt.savefig(path, bbox_inches='tight', dpi=300)
             #print(f"Imagen guardada en: {path}")
 
-        #plt.show()
+        plt.show()
 
         return salas
 
@@ -474,7 +473,7 @@ class Mapa():
             plt.savefig(path, bbox_inches='tight', dpi=300)
             #print(f"Imagen guardada en: {path}")
 
-        #plt.show()
+        plt.show()
 
 def automata_celular(iteraciones=4, dimensiones=50, p=0.45, pared=4, cueva=5, num_semillas=5, semilla=None, guardar=False):
     mapa = Mapa(dimensiones=dimensiones, p=p, pared=pared, cueva=cueva, semilla=semilla)
@@ -581,7 +580,8 @@ class Cuadrado():
 
             for hijo, offset in zip(hijos, offsets):
                 nuevo_centro = (self.centro[0] + offset[0], self.centro[1] + offset[1])
-                self.cuadrantes.append(Cuadrado(self.G, hijo, nuevo_centro, mitad_tamaño))
+                self.cuadrantes.append(Cuadrado(self.G, hijo, nuevo_centro, mitad_tamaño, semilla=self.semilla))
+
 
     def __str__(self):
         return f"Cuadrado(nodo={self.nodo},tipo={self.tipo})"
@@ -977,7 +977,7 @@ class Cuadrado():
         # Dibujar etiquetas de los pesos
         nx.draw_networkx_edge_labels(self.S, pos, edge_labels=edge_labels, font_color='red')
 
-        #plt.show()
+        plt.show()
 
     def dibujar_debug(self, guardar=False):
         # Colores constantes
@@ -1065,7 +1065,7 @@ class Cuadrado():
 
         # Crear un solo gráfico
         fig, ax = plt.subplots(figsize=(self.tamaño, self.tamaño))
-        fig.patch.set_facecolor('grey')
+        #fig.patch.set_facecolor('grey')
 
         # Configurar el área de dibujo
         ax.set_xlim(0, self.tamaño)
@@ -1158,23 +1158,19 @@ class Cuadrado():
             fig.savefig(archivo_guardado, transparent=False, bbox_inches='tight', dpi=300)
             #print(f"Figura guardada en: {archivo_guardado}")
 
-        #plt.show()
+        plt.show()
 
-def crear_mazmorra_space_part(arquitectura, npart = 20, prof_division = 5, nsalas = 5, densidad = 1, guardar = False, semilla=None):
+def crear_mazmorra_space_part(npart = 20, prof_division = 5, nsalas = 5, densidad = 1, guardar = False, semilla=None):
     if densidad > 3 or densidad < 0:
         print("La densidad debe estar entre 0 y 3")
         return
-    A, semilla = formar_particion_estado_4(npart, d = prof_division)
+    A, semilla = formar_particion_estado_4(npart, d = prof_division, semilla=semilla)
     cuadrado = Cuadrado(A,semilla=semilla)
     #cuadrado.imprimir_estructura()
     cuadrado.formar_grafo()
     #cuadrado.dibujar_grafo()
-    if arquitectura == 'clasica':
-        cuadrado.crear_mazmorra_clasica(nsalas, densidad=4-densidad)
-        pass
-    elif arquitectura == 'dijkstra':
-        cuadrado.crear_mazmorra_dijkstra(nsalas)
-        pass
+    cuadrado.crear_mazmorra_clasica(nsalas, densidad=4-densidad)
+
     #cuadrado.dibujar_debug(guardar=guardar)
     cuadrado.dibujar(guardar=guardar)
     cuadrado.mostrar_mapa_y_grafo(guardar=guardar)
@@ -1431,6 +1427,67 @@ parametros_division = {
     "densidad":[1, 2, 3]
 }
 
-evaluar_algoritmo("Colocacion_aleatoria", generar_dungeon_ColAl, parametros_random, "Colocacion_aleatoria")
-evaluar_algoritmo("Automata_Celular", automata_celular, parametros_celular, "Automata_Celular")
-evaluar_algoritmo("Division_espacial", crear_mazmorra_space_part, parametros_division, "Division_espacial")
+#evaluar_algoritmo("Colocacion_aleatoria", generar_dungeon_ColAl, parametros_random, "Colocacion_aleatoria")
+#evaluar_algoritmo("Automata_Celular", automata_celular, parametros_celular, "Automata_Celular")
+#evaluar_algoritmo("Division_espacial", crear_mazmorra_space_part, parametros_division, "Division_espacial")
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generador de mazmorras para TFG")
+    parser.add_argument("--algoritmo", choices=["Colocacion", "Automata", "Division"], required=True,
+                        help="Algoritmo de generación: random | celular | division")
+
+    # Comunes
+    parser.add_argument("--semilla", type=int, default=None, help="Semilla aleatoria")
+
+    # Parámetros para colocación aleatoria
+    parser.add_argument("--anchura", type=int, default=60, help="Anchura de la matriz (random)")
+    parser.add_argument("--altura", type=int, default=30, help="Altura de la matriz (random)")
+    parser.add_argument("--max_salas", type=int, default=10, help="Número máximo de salas (random)")
+    parser.add_argument("--intentos_por_sala", type=int, default=10, help="Intentos por sala (random)")
+
+    # Parámetros para autómata celular
+    parser.add_argument("--dimensiones", type=int, default=50, help="Tamaño del mapa cuadrado (celular)")
+    parser.add_argument("--p", type=float, default=0.45, help="Probabilidad inicial de muro (celular)")
+    parser.add_argument("--pared", type=int, default=4, help="Vecinos para mantener muro (celular)")
+    parser.add_argument("--cueva", type=int, default=5, help="Vecinos para convertir en suelo (celular)")
+    parser.add_argument("--iteraciones", type=int, default=4, help="Iteraciones del autómata (celular)")
+    parser.add_argument("--semillas", type=int, default=5, help="Número de salas (celular)")
+
+    # Parámetros para división espacial
+    parser.add_argument("--npart", type=int, default=20, help="Número de nodos en la partición (division)")
+    parser.add_argument("--profundidad", type=int, default=5, help="Profundidad máxima de partición (division)")
+    parser.add_argument("--nsalas", type=int, default=5, help="Número de salas a crear (division)")
+    parser.add_argument("--densidad", type=int, default=1, help="Densidad de adyacencia (0–3) (division)")
+
+    args = parser.parse_args()
+
+    if args.algoritmo == "Colocacion":
+        generar_dungeon_ColAl(
+            anchura=args.anchura,
+            altura=args.altura,
+            max_salas=args.max_salas,
+            semilla=args.semilla,
+            intentos_por_sala=args.intentos_por_sala,
+        )
+
+    elif args.algoritmo == "Automata":
+        automata_celular(
+            dimensiones=args.dimensiones,
+            p=args.p,
+            pared=args.pared,
+            cueva=args.cueva,
+            iteraciones=args.iteraciones,
+            num_semillas=args.semillas,
+            semilla=args.semilla,
+        )
+
+    elif args.algoritmo == "Division":
+        crear_mazmorra_space_part(
+            npart=args.npart,
+            prof_division=args.profundidad,
+            nsalas=args.nsalas,
+            densidad=args.densidad,
+            semilla=args.semilla
+        )
